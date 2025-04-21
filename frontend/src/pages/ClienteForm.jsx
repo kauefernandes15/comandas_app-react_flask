@@ -1,13 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import InputMask from 'react-input-mask';
 import {
     TextField,
     Button,
     Box,
     Typography,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Select,
     Toolbar
 } from '@mui/material';
+import IMaskInputWrapper from '../components/IMaskInputWrapper';
 
 const ClienteForm = () => {
     const { register, handleSubmit, reset, control, formState: { errors } } = useForm();
@@ -18,7 +22,7 @@ const ClienteForm = () => {
     }, []);
 
     const onSubmit = (data) => {
-        console.log("Dados do cliente:", data);
+        console.log("Dados do Cliente:", data);
     };
 
     const focusStyle = {
@@ -52,18 +56,11 @@ const ClienteForm = () => {
                 }}
             >
                 <Typography variant="h6" color="primary">
-                    Dados do Cliente
+                    Dados Cliente
                 </Typography>
             </Toolbar>
 
-            <Box
-                sx={{
-                    backgroundColor: 'white',
-                    padding: 2,
-                    borderRadius: 3,
-                    mb: 2
-                }}
-            >
+            <Box sx={{ backgroundColor: 'white', padding: 2, borderRadius: 3, mb: 2 }}>
                 <TextField
                     label="Nome"
                     fullWidth
@@ -103,56 +100,43 @@ const ClienteForm = () => {
                     rules={{
                         required: 'Telefone é obrigatório',
                         minLength: {
-                            value: 11,
-                            message: 'Telefone deve ter 11 dígitos'
-                        },
-                        maxLength: {
-                            value: 11,
-                            message: 'Telefone deve ter 11 dígitos'
+                            value: 14,
+                            message: 'Telefone inválido'
                         }
                     }}
                     render={({ field }) => (
-                        <InputMask
-                            mask="(99) 99999-9999"
-                            value={field.value}
-                            onChange={field.onChange}
-                            maskChar=""
-                        >
-                            {(inputProps) => (
-                                <TextField
-                                    {...inputProps}
-                                    label="Telefone"
-                                    fullWidth
-                                    margin="normal"
-                                    sx={focusStyle}
-                                    error={!!errors.telefone}
-                                    helperText={errors.telefone?.message}
-                                />
-                            )}
-                        </InputMask>
+                        <TextField
+                            {...field}
+                            label="Telefone"
+                            fullWidth
+                            margin="normal"
+                            sx={focusStyle}
+                            InputProps={{
+                                inputComponent: IMaskInputWrapper,
+                                inputProps: {
+                                    mask: '(00) 00000-0000'
+                                }
+                            }}
+                            error={!!errors.telefone}
+                            helperText={errors.telefone?.message}
+                        />
                     )}
                 />
 
-                <TextField
-                    label="Email"
-                    type="email"
-                    fullWidth
-                    margin="normal"
-                    sx={focusStyle}
-                    {...register('email', {
-                        required: 'Email Obrigatório',
-                        maxLength: {
-                            value: 100,
-                            message: 'Máximo de 100 caracteres'
-                        },
-                        pattern: {
-                            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                            message: 'Email inválido'
-                        }
-                    })}
-                    error={!!errors.email}
-                    helperText={errors.email?.message}
-                />
+                <FormControl fullWidth margin="normal" sx={focusStyle}>
+                    <InputLabel id="grupo-label">Grupo</InputLabel>
+                    <Select
+                        labelId="grupo-label"
+                        label="Grupo"
+                        defaultValue=""
+                        {...register('grupo')}
+                    >
+                        <MenuItem value="admin">Admin</MenuItem>
+                        <MenuItem value="gerente">Gerente</MenuItem>
+                        <MenuItem value="funcionario">Funcionário</MenuItem>
+                    </Select>
+                </FormControl>
+
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button sx={{ mr: 1 }} onClick={() => reset()}>
                         Cancelar

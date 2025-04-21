@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import InputMask from 'react-input-mask';
 import {
     TextField,
     Button,
@@ -12,6 +11,7 @@ import {
     Select,
     Toolbar
 } from '@mui/material';
+import IMaskInputWrapper from '../components/IMaskInputWrapper';
 
 const FuncionarioForm = () => {
     const { register, handleSubmit, reset, control, formState: { errors } } = useForm();
@@ -116,35 +116,29 @@ const FuncionarioForm = () => {
                     rules={{
                         required: 'Telefone é obrigatório',
                         minLength: {
-                            value: 11,
-                            message: 'Telefone deve ter 11 dígitos'
-                        },
-                        maxLength: {
-                            value: 11,
-                            message: 'Telefone deve ter 11 dígitos'
+                            value: 14,
+                            message: 'Telefone inválido'
                         }
                     }}
                     render={({ field }) => (
-                        <InputMask
-                            mask="(99) 99999-9999"
-                            value={field.value}
-                            onChange={field.onChange}
-                            maskChar=""
-                        >
-                            {(inputProps) => (
-                                <TextField
-                                    {...inputProps}
-                                    label="Telefone"
-                                    fullWidth
-                                    margin="normal"
-                                    sx={focusStyle}
-                                    error={!!errors.telefone}
-                                    helperText={errors.telefone?.message}
-                                />
-                            )}
-                        </InputMask>
+                        <TextField
+                            {...field}
+                            label="Telefone"
+                            fullWidth
+                            margin="normal"
+                            sx={focusStyle}
+                            InputProps={{
+                                inputComponent: IMaskInputWrapper,
+                                inputProps: {
+                                    mask: '(00) 00000-0000'
+                                }
+                            }}
+                            error={!!errors.telefone}
+                            helperText={errors.telefone?.message}
+                        />
                     )}
                 />
+
                 <FormControl fullWidth margin="normal" sx={focusStyle}>
                     <InputLabel id="grupo-label">Grupo</InputLabel>
                     <Select
