@@ -1,169 +1,43 @@
-import React, { useEffect, useRef } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import {
-    TextField,
-    Button,
-    Box,
-    Typography,
-    MenuItem,
-    FormControl,
-    InputLabel,
-    Select,
-    Toolbar
-} from '@mui/material';
+import { useForm, Controller } from 'react-hook-form'; // incluído controller para as máscaras
+import React from "react";
+import { TextField, Button, Box, Typography, MenuItem, FormControl, InputLabel, Select, Toolbar } from '@mui/material';
+// import do IMaskInputWrapper, que é o wrapper do IMaskInput
 import IMaskInputWrapper from '../components/IMaskInputWrapper';
-
 const FuncionarioForm = () => {
-    const { register, handleSubmit, reset, control, formState: { errors } } = useForm();
-    const nomeRef = useRef();
-
-    useEffect(() => {
-        nomeRef.current?.focus();
-    }, []);
-
+    const { control, register, handleSubmit, reset, formState: { errors } } = useForm();
+    // o controle é usado para gerenciar o estado do formulário e as entradas controladas, como o IMaskInputWrapper.
+    // o controle é necessário para integrar o IMaskInputWrapper com o react-hook-form,
+    // permitindo que o valor da entrada seja gerenciado pelo react-hook-form e as validações sejam aplicadas corretamente.
     const onSubmit = (data) => {
-        console.log("Dados do Funcionario:", data);
+        console.log("Dados do funcionário:", data);
     };
-
-    const focusStyle = {
-        '& .MuiOutlinedInput-root': {
-            '&.Mui-focused fieldset': {
-                borderColor: 'blue',
-                borderWidth: '2px'
-            }
-        }
-    };
-
     return (
-        <Box
-            component="form"
-            onSubmit={handleSubmit(onSubmit)}
-            sx={{
-                backgroundColor: '#ADD8E6',
-                padding: 2,
-                borderRadius: 1,
-                mt: 2
-            }}
-        >
-            <Toolbar
-                sx={{
-                    backgroundColor: '#ADD8E6',
-                    padding: 1,
-                    borderRadius: 2,
-                    mb: 2,
-                    display: 'flex',
-                    justifyContent: 'space-between'
-                }}
-            >
-                <Typography variant="h6" color="primary">
-                    Dados Funcionário
-                </Typography>
-            </Toolbar>
-
-            <Box sx={{ backgroundColor: 'white', padding: 2, borderRadius: 3, mb: 2 }}>
-                <TextField
-                    label="Nome"
-                    fullWidth
-                    margin="normal"
-                    inputRef={nomeRef}
-                    sx={focusStyle}
-                    {...register('nome', {
-                        required: 'Nome é obrigatório',
-                        maxLength: {
-                            value: 100,
-                            message: 'Máximo de 100 caracteres'
-                        }
-                    })}
-                    error={!!errors.nome}
-                    helperText={errors.nome?.message}
-                />
-
-                <TextField
-                    label="CPF"
-                    fullWidth
-                    margin="normal"
-                    sx={focusStyle}
-                    {...register('cpf', {
-                        required: 'CPF é obrigatório',
-                        maxLength: {
-                            value: 11,
-                            message: 'Máximo de 11 caracteres'
-                        }
-                    })}
-                    error={!!errors.cpf}
-                    helperText={errors.cpf?.message}
-                />
-
-                <TextField
-                    label="Matrícula"
-                    fullWidth
-                    margin="normal"
-                    sx={focusStyle}
-                    {...register('matricula', {
-                        required: 'Matrícula é obrigatória',
-                        maxLength: {
-                            value: 11,
-                            message: 'Máximo de 11 caracteres'
-                        }
-                    })}
-                    error={!!errors.matricula}
-                    helperText={errors.matricula?.message}
-                />
-
-                <Controller
-                    name="telefone"
-                    control={control}
-                    rules={{
-                        required: 'Telefone é obrigatório',
-                        minLength: {
-                            value: 14,
-                            message: 'Telefone inválido'
-                        }
-                    }}
-                    render={({ field }) => (
-                        <TextField
-                            {...field}
-                            label="Telefone"
-                            fullWidth
-                            margin="normal"
-                            sx={focusStyle}
-                            InputProps={{
-                                inputComponent: IMaskInputWrapper,
-                                inputProps: {
-                                    mask: '(00) 00000-0000'
-                                }
-                            }}
-                            error={!!errors.telefone}
-                            helperText={errors.telefone?.message}
-                        />
-                    )}
-                />
-
-                <FormControl fullWidth margin="normal" sx={focusStyle}>
-                    <InputLabel id="grupo-label">Grupo</InputLabel>
-                    <Select
-                        labelId="grupo-label"
-                        label="Grupo"
-                        defaultValue=""
-                        {...register('grupo')}
-                    >
-                        <MenuItem value="admin">Admin</MenuItem>
-                        <MenuItem value="gerente">Gerente</MenuItem>
-                        <MenuItem value="funcionario">Funcionário</MenuItem>
-                    </Select>
-                </FormControl>
-
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                    <Button sx={{ mr: 1 }} onClick={() => reset()}>
-                        Cancelar
-                    </Button>
-                    <Button type="submit" variant="contained">
-                        Cadastrar
-                    </Button>
-                </Box>
-            </Box>
+        <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ backgroundColor: '#ADD8E6', padding: 2, borderRadius: 1, mt: 2 }}>
+            {/* CPF com máscara */}
+            <Controller
+                name="cpf" control={control} defaultValue="" rules={{ required: 'CPF é obrigatório' }}
+                render={({ field }) => (
+                    <TextField
+                        {...field}
+                        label="CPF" fullWidth margin="normal"
+                        error={!!errors.cpf} helperText={errors.cpf?.message}
+                        InputProps={{
+                            // Define o IMaskInputWrapper como o componente de entrada
+                            inputComponent: IMaskInputWrapper,
+                            inputProps: {
+                                mask: "000.000.000-00",
+                                // O regex [0-9] aceita apenas números de 0 a 9
+                                definitions: {
+                                    "0": /[0-9]/,
+                                },
+                                // Retorna apenas os números no valor
+                                unmask: true,
+                            },
+                        }}
+                    />
+                )}
+            />
         </Box>
     );
 };
-
 export default FuncionarioForm;
