@@ -67,6 +67,7 @@ const ClienteForm = () => {
                     margin="normal"
                     inputRef={nomeRef}
                     sx={focusStyle}
+
                     {...register('nome', {
                         required: 'Nome é obrigatório',
                         maxLength: {
