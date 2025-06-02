@@ -1,154 +1,146 @@
-import { useForm } from 'react-hook-form';
-import React, { useEffect, useRef } from 'react';
-import {
-    TextField,
-    Button,
-    Box,
-    Typography,
-    MenuItem,
-    FormControl,
-    InputLabel,
-    Select,
-    Toolbar
-} from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { TextField, Button, Box, Typography, Toolbar } from '@mui/material';
+import { createProduto, updateProduto, getProdutoById } from '../services/produtoService';
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from 'react-toastify';
+import imageCompression from 'browser-image-compression';
 
 const ProdutoForm = () => {
-    const { register, handleSubmit, formState: { errors } } = useForm();
-    const nomeRef = useRef();
+    const { id, opr } = useParams();
+    const navigate = useNavigate();
+    const { control, handleSubmit, reset, formState: { errors } } = useForm();
+    const isReadOnly = opr === 'view';
+    let title;
+    if (opr === 'view') {
+        title = `Visualizar Produto: ${id}`;
+    } else if (id) {
+        title = `Editar Produto: ${id}`;
+    } else {
+        title = "Novo Produto";
+    }
+    const [foto, setFoto] = useState(null);
+    const [fotoPreview, setFotoPreview] = useState(null);
 
-    useEffect(() => {
-        nomeRef.current?.focus();
-    }, []);
-
-    const onSubmit = (data) => {
-        console.log("Dados do produto:", data);
+    const handleFileChange = async (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            try {
+                const options = {
+                    maxSizeMB: 1,
+                    maxWidthOrHeight: 100,
+                    useWebWorker: true
+                };
+                const compressedFile = await imageCompression(file, options);
+                setFoto(compressedFile);
+                const previewUrl = URL.createObjectURL(compressedFile);
+                setFotoPreview(previewUrl);
+            } catch (error) {
+                console.error("Erro ao redimensionar a imagem:", error);
+                toast.error("Erro ao redimensionar a imagem.");
+            }
+        } else {
+            setFoto(null);
+            setFotoPreview(null);
+        }
     };
 
-    const focusStyle = {
-        '& .MuiOutlinedInput-root': {
-            '&.Mui-focused fieldset': {
-                borderColor: 'blue',
-                borderWidth: '2px'
+    useEffect(() => {
+        if (id) {
+            const fetchProduto = async () => {
+                const data = await getProdutoById(id);
+                reset(data);
+                if (data.foto) {
+                    setFoto(data.foto);
+                    setFotoPreview(data.foto);
+                }
+            };
+            fetchProduto();
+        }
+    }, [id, reset]);
+
+    const onSubmit = async (data) => {
+        try {
+            if (!foto && id) {
+                const produto = await getProdutoById(id);
+                data.foto = produto.foto;
+            } else if (foto) {
+                data.foto = foto;
             }
+            let retorno;
+            if (id) {
+                retorno = await updateProduto(id, data);
+            } else {
+                retorno = await createProduto(data);
+            }
+            if (!retorno?.id) {
+                throw new Error(retorno.erro || "Erro ao salvar produto.");
+            }
+            toast.success(`Produto salvo com sucesso. ID: ${retorno.id}`, { position: "top-center" });
+            navigate('/produtos');
+        } catch (error) {
+            toast.error(`Erro ao salvar produto: \n${error.message}`, { position: "top-center" });
         }
     };
 
     return (
-        <Box
-            component="form"
-            onSubmit={handleSubmit(onSubmit)}
-            sx={{
-                backgroundColor: '#ADD8E6',
-                padding: 2,
-                borderRadius: 1,
-                mt: 2
-            }}
-        >
-            <Toolbar
-                sx={{
-                    backgroundColor: '#ADD8E6',
-                    padding: 1,
-                    borderRadius: 2,
-                    mb: 2,
-                    display: 'flex',
-                    justifyContent: 'space-between'
-                }}
-            >
-                <Typography variant="h6" color="primary">
-                    Dados do Produto
-                </Typography>
+        <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ backgroundColor: '#ADD8E6', padding: 2, borderRadius: 1, mt: 2 }}>
+            <Toolbar sx={{ backgroundColor: '#ADD8E6', padding: 1, borderRadius: 2, mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="h6" gutterBottom color="primary">{title}</Typography>
             </Toolbar>
-
-            <Box
-                sx={{
-                    backgroundColor: 'white',
-                    padding: 2,
-                    borderRadius: 3,
-                    mb: 2
-                }}
-            >
-                <TextField
-                    label="Nome"
-                    fullWidth
-                    margin="normal"
-                    inputRef={nomeRef}
-                    sx={focusStyle}
-                    {...register('nome', {
-                        required: 'Nome é obrigatório',
-                        maxLength: {
-                            value: 100,
-                            message: 'Máximo de 100 caracteres'
-                        }
-
-                    })}
-                    error={!!errors.nome}
-                    helperText={errors.nome?.message}
-                />
-
-                <TextField
-                    label="Categoria"
-                    fullWidth
-                    margin="normal"
-                    sx={focusStyle}
-                    {...register('categoria', { required: 'Categoria é obrigatória' })}
-                    error={!!errors.categoria}
-                    helperText={errors.categoria?.message}
-                />
-
-                <TextField
-                    label="Preço"
-                    type="number"
-                    fullWidth
-                    margin="normal"
-                    inputProps={{ step: "0.01" }}
-                    sx={focusStyle}
-                    {...register('preco', {
-                        required: 'Preço é obrigatório',
-                        min: { value: 0, message: 'Preço deve ser maior ou igual a zero' }
-                    })}
-                    error={!!errors.preco}
-                    helperText={errors.preco?.message}
-                />
-
-                <TextField
-                    label="Estoque"
-                    type="number"
-                    fullWidth
-                    margin="normal"
-                    sx={focusStyle}
-                    {...register('estoque', {
-                        required: 'Estoque é obrigatório'
-                    })}
-                    error={!!errors.estoque}
-                    helperText={errors.estoque?.message}
-                />
-
-                <FormControl fullWidth margin="normal" sx={focusStyle}>
-                    <InputLabel id="status-label">Status</InputLabel>
-                    <Select
-                        labelId="status-label"
-                        label="Status"
-                        defaultValue=""
-                        {...register('status', { required: 'Status é obrigatório' })}
-                        error={!!errors.status}
-                    >
-                        <MenuItem value="ativo">Ativo</MenuItem>
-                        <MenuItem value="inativo">Inativo</MenuItem>
-                    </Select>
-                    {errors.status && (
-                        <Typography variant="caption" color="error">
-                            {errors.status.message}
-                        </Typography>
+            <Box sx={{ backgroundColor: 'white', padding: 2, borderRadius: 3, mb: 2 }}>
+                {opr === 'view' && (
+                    <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                        Todos os campos estão em modo somente leitura.
+                    </Typography>
+                )}
+                <Controller
+                    name="nome"
+                    control={control}
+                    defaultValue=""
+                    rules={{ required: "Nome é obrigatório", maxLength: { value: 100, message: "Nome deve ter no máximo 100 caracteres" } }}
+                    render={({ field }) => (
+                        <TextField {...field} disabled={isReadOnly} label="Nome" fullWidth margin="normal" error={!!errors.nome} helperText={errors.nome?.message} />
                     )}
-                </FormControl>
-
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                    <Button sx={{ mr: 1 }}>
-                        Cancelar
-                    </Button>
-                    <Button type="submit" variant="contained">
-                        Cadastrar
-                    </Button>
+                />
+                <Controller
+                    name="descricao"
+                    control={control}
+                    defaultValue=""
+                    rules={{ required: "Descrição é obrigatória", maxLength: { value: 200, message: "Descrição deve ter no máximo 200 caracteres" } }}
+                    render={({ field }) => (
+                        <TextField {...field} disabled={isReadOnly} label="Descrição" fullWidth margin="normal" error={!!errors.nome} helperText={errors.nome?.message} />
+                    )}
+                />
+                <Controller
+                    name="valor_unitario"
+                    control={control}
+                    defaultValue=""
+                    rules={{ required: "Valor é obrigatório", maxLength: { value: 100, message: "Valor deve ter no máximo 100 caracteres" } }}
+                    render={({ field }) => (
+                        <TextField {...field} type="number" disabled={isReadOnly} label="Valor" fullWidth margin="normal" error={!!errors.nome} helperText={errors.nome?.message} />
+                    )}
+                />
+                <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" gutterBottom color='primary'>Foto do Produto:</Typography>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        disabled={isReadOnly}
+                        style={{ marginTop: '8px' }}
+                    />
+                </Box>
+                {fotoPreview && (
+                    <Box sx={{ mt: 2 }}>
+                        <img src={fotoPreview} alt="Pré-visualização" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px' }} />
+                    </Box>
+                )}
+                <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+                    <Button onClick={() => navigate('/produtos')} sx={{ mr: 1 }}>Cancelar</Button>
+                    {opr !== 'view' && (
+                        <Button type="submit" variant="contained" color="primary">{id ? "Atualizar" : "Cadastrar"}</Button>
+                    )}
                 </Box>
             </Box>
         </Box>
