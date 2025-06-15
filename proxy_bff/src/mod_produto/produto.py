@@ -49,59 +49,22 @@ def create_produto():
         if not nome or not valor_unitario:
             return jsonify({"error": "Nome e valor são obrigatórios"}), 400
 
-        caminho_foto = None
+        foto_base64 = None
         if foto:
-            # Caminho onde a foto será salva
-            pasta_fotos = os.path.join('static', 'fotos')
-            os.makedirs(pasta_fotos, exist_ok=True)
-            caminho_foto = os.path.join(pasta_fotos, foto.filename)
-            foto.save(caminho_foto)
+            foto_data = foto.read()
+            foto_base64 = base64.b64encode(foto_data).decode('utf-8')
+            foto_base64 = f"data:{foto.mimetype};base64,{foto_base64}"
 
-        # Aqui você pode salvar no banco, se quiser
-        return jsonify({
-            "mensagem": "Produto criado com sucesso",
-            "produto": {
-                "nome": nome,
-                "descricao": descricao,
-                "valor_unitario": float(valor_unitario),
-                "foto": caminho_foto
-            }
-        }), 201
+        data = {
+            "nome": nome,
+            "descricao": descricao,
+            "valor_unitario": float(valor_unitario),
+            "foto": foto_base64
+        }
+
+        response_data, status_code = Funcoes.make_api_request('post', API_ENDPOINT_PRODUTO, data=data)
+
+        return jsonify(response_data), status_code
 
     except Exception as e:
         return jsonify({"error": f"Erro ao criar produto: {str(e)}"}), 500
-# Rota para Atualizar um Produto existente (PUT)
-@bp_produto.route('/', methods=['PUT'])
-def update_produto():
-# obtém a foto enviada no formulário
-# o arquivo deve ter sido enviado como multipart/form-data
-    foto = request.files.get('foto')
-# nos casos onde o usuário não alterar a foto
-# o conteudo da foto já pode ter vindo como base64
-# então nesses casos não é necessário converter novamente
-    if foto:
-# nova foto foi enviada
-# Converte a foto para Base64
-# realiza a leitura do conteúdo do arquivo com a foto
-        foto_data = foto.read()
-# converte para Base64
-        foto_base64 = base64.b64encode(foto_data).decode('utf-8')
-# adiciona o prefixo para indicar o tipo de arquivo
-        foto_base64 = f"data:{foto.mimetype};base64,{foto_base64}"
-    else:
-# foto não foi enviada, então vamos usar a foto já existente
-# os dados já foram enviados como base64
-# realizar a leitura normal do conteúdo
-        foto_base64 = request.form.get('foto')
-# Monta o JSON para enviar à API externa
-    data = {
-        "id_produto": request.form.get('id_produto'),
-        "nome": request.form.get('nome'),
-        "descricao": request.form.get('descricao'),
-        "valor_unitario": request.form.get('valor_unitario'),
-        "foto": foto_base64
-}
-# chama a função para fazer a requisição à API externa
-    response_data, status_code = Funcoes.make_api_request('put', f"{API_ENDPOINT_PRODUTO}{data.get('id_produto')}", data=data)
-# retorna o json da resposta da API externa
-    return jsonify(response_data), status_code

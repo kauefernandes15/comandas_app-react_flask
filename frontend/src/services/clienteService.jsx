@@ -1,6 +1,6 @@
 import axios from "axios";
 // const PROXY_URL = import.meta.env.VITE_PROXY_BASE_URL + "cliente/";
-const PROXY_URL = 'http://localhost:5000/api/' + "cliente/";
+const PROXY_URL = 'http://localhost:5000/api/' + "cliente/"; 
 
 export const getClientes = async () => {
   const response = await axios.get(`${PROXY_URL}all`);

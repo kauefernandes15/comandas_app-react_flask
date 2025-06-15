@@ -63,9 +63,9 @@ const ProdutoForm = () => {
         try {
             if (!foto && id) {
                 const produto = await getProdutoById(id);
-                data.foto = produto.foto;
+                data.foto = "";
             } else if (foto) {
-                data.foto = foto;
+                data.foto = "";
             }
             let retorno;
             if (id) {
